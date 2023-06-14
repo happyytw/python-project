@@ -11,7 +11,7 @@ import threading
 import matplotlib
 matplotlib.use('TkAgg')
 
-ctk.set_default_color_theme("dark-blue")
+
 url = "http://1.228.201.87:8010/sagam"
 url2 = "http://1.228.201.87:8010/sagam_chk"
 
@@ -42,6 +42,7 @@ class MyTableWidget(ttk.Treeview):
     global numbers
 
     def __init__(self, master, rows, cols):
+        global warned
         super().__init__(master, columns=("", "", ""), show="headings")
         self.initUI()
         self.bind('<ButtonRelease-1>', self.cell_was_clicked)
@@ -79,6 +80,7 @@ class MyTableWidget(ttk.Treeview):
     def initUI(self):
         self.pack(padx=0, pady=0)
         # print("testing")
+        
         print("처음으로 여기서 보냈다" + data["warning"])
         self.response2 = requests.post(url2, data=json.dumps(sure_chk), headers=headers)
         self.response = requests.post(url, data=json.dumps(data), headers=headers) # data = wornning
@@ -93,54 +95,59 @@ class MyTableWidget(ttk.Treeview):
         
         print(f"response2_data: {self.response2_data['room102']}" + f"{type(self.response2_data['room102'])}")
 
-        print(response.text)
+        print(self.response.text)
         
         if self.get_children():
             item_id = self.get_children()[0]
-            new_values = ["1호실", content1, 0, "X"]
+            new_values = ["1호실", self.content1, warned[0]]
             self.item(item_id, values=new_values)
             item_id = self.get_children()[1]
-            new_values = ["2호실", content2, 0, "X"]
+            new_values = ["2호실", self.content2, warned[1]]
             self.item(item_id, values=new_values)
             # print(f"response2_data: {response2_data['room102']}")
-            if response2_data['room101'] == 1: # 확인버튼 눌렀다
+            if self.response2_data['room101'] == 1: # 확인버튼 눌렀다
                 # item_id = self.get_children()[0]
                 # new_values = ["1호실", content1, 0, ""]
                 # self.item(item_id, values=new_values)
                 messagebox.showinfo("101호","확인하였습니다")
-            if response2_data['room102'] == 1:
+                
+                
+            if self.response2_data['room102'] == 1:
                 # item_id = self.get_children()[1]
                 # new_values = ["2호실", content2, 0, ""]
                 # self.item(item_id, values=new_values)
                 messagebox.showinfo("102호","확인하였습니다")
+                
+                
         
-        # print("alert:", response2_data['alert102'])
+        # # print("alert:", response2_data['alert102'])
         
             # if response2_data['alert101'] == 1:    
             #     message=tk.Message(root, text='101호실에서 경고메시지가 왔다', width=100, relief="solid")
             #     message.pack()
-            # if response2_data['alert102'] == 1:
+            # if response2_data['alert102'] == c1:
             #     print("실행되얻")
             #     message=tk.Message(root, text='102호실에서 경고메시지가 왔다', width=100, relief="solid")
             #     message.pack()
-            if response2_data['alert101'] == 1:    
+            if self.response2_data['alert101'] == 1:    
                 # message = messagebox(root, text='101호실에서 경고메시지가 왔다', width=100, relief="solid")
                 # messagebox.showinfo("경고", "민원이 들어왔습니다")
-                messagebox.showwarning("101호실", "신고")
+                messagebox.showwarning("101호실", "신고가 들어왔습니다")
                 # messagebox.place(relx=0.5, rely=0.5, anchor="center")  # 중앙에 배치
-            if response2_data['alert102'] == 1:
+            if self.response2_data['alert102'] == 1:
                 print("실행되얻")
                 # message = messagebox(root, text='102호실에서 경고메시지가 왔다', width=100, relief="solid")
                 # messagebox.showinfo("경고", "민원이 들어왔습니다")
                 messagebox.showwarning("102호실", "신고가 들어왔습니다")
                 
-                # messagebox.place(relx=0.5, rely=0.3,anchor="center")  # 중앙에 배치
+        #         # messagebox.place(relx=0.5, rely=0.3,anchor="center")  # 중앙에 배치
                 
-        print(f"response value: {response2_data['alert102']} + {type(response2_data['alert102'])}")
+        # print(f"response value: {response2_data['alert102']} + {type(response2_data['alert102'])}")
         ###################################################################################################
-        thread = threading.Thread(target=self.updateValue)
-        thread.start()
-        thread.join(1)
+        # thread = threading.Thread(target=self.updateValue)
+        # thread.start()
+        # thread.join(1)
+        self.after(1000, self.get_children)
         global event_id
         event_id = self.after(1000, self.initUI)  # 1000ms마다 업데이트한다
     
@@ -171,13 +178,13 @@ class MyTableWidget(ttk.Treeview):
 
 
     def updateValue(self):
-        print("")
+        
         if self.get_children():
             item_id = self.get_children()[0]
-            new_values = ["1호실", self.content1, warned[0], "X"]
+            new_values = ["1호실", self.content1, warned[0]]
             self.item(item_id, values=new_values)
             item_id = self.get_children()[1]
-            new_values = ["2호실", self.content2, warned[1], "X"]
+            new_values = ["2호실", self.content2, warned[1]]
             self.item(item_id, values=new_values)
             # print(f"response2_data: {response2_data['room102']}")
             if self.response2_data['room101'] == 1: # 확인버튼 눌렀다
@@ -221,19 +228,22 @@ class MyTableWidget(ttk.Treeview):
         print("확인 버튼이 클릭되었습니다.")
 
 
-    def send(self,param):  # 호실의 값을 서버에 보낸다
+    def send(self):  # 호실의 값을 서버에 보낸다
         # send 함수의 로직을 여기에 추가
         # POST 요청을 보낼 데이터
         # response = requests.post(url, data=json.dumps(data), headers=headers)
+        global row
         data["warning"] = ""
-        data["warning"] = param
-        warned[int(param)-1] = warned[int(param)-1] + 1
-        print("보냈다" + " " + param)
+        data["warning"] = row
+        self.response = requests.post(url, data=json.dumps(data), headers=headers)
+        warned[int(row)-1] = warned[int(row)-1] + 1
+        print("보냈다" + " " + row)
+        data["warning"] = ""
 
 
     def sendWarning(self):
 
-        self.send(row)
+        # self.send(row)
         print("눌렀자나")
         ################################################################################################################################################
         # 그래프 값을 갱신할 때 사용할 numbers 리스트 초기화
